@@ -14,6 +14,9 @@
 -- You should have received a copy of the GNU General Public License
 -- along with APW. If not, see <http://www.gnu.org/licenses/>.
 
+-- Edited by Foxtrot to get rid of progress bar, and represent mute by 
+-- setting volume to 0.
+
 -- Configuration variables
 local width         = 40        -- width in pixels of progressbar
 local margin_right  = 0         -- right margin in pixels of progressbar
@@ -26,7 +29,7 @@ local color_bg      = '#33450f' -- background color
 local color_mute    = '#be2a15' -- foreground color when muted
 local color_bg_mute = '#532a15' -- background color when muted
 local mixer         = 'pavucontrol' -- mixer command
-local show_text     = false     -- show percentages on progressbar
+local show_text     = true     -- show percentages on progressbar
 local text_color    = '#fff' -- color of text
 
 -- End of configuration
@@ -52,17 +55,15 @@ local pulseBar = awful.widget.progressbar()
 pulseBar:set_width(width)
 pulseBar.step = step
 
-local function make_stack(w1, w2)
+local function make_stack(w2)
     local ret = wibox.widget.base.make_widget()
 
-    ret.fit = function(self, ...) return w1:fit(...) end
+    ret.fit = function(self, ...) return w2:fit(...) end
     ret.draw = function(self, wibox, cr, width, height)
-        w1:draw(wibox, cr, width, height)
         w2:draw(wibox, cr, width, height)
     end
 
     local update = function() ret:emit_signal("widget::updated") end
-    w1:connect_signal("widget::updated", update)
     w2:connect_signal("widget::updated", update)
 
     return ret
@@ -73,7 +74,7 @@ local pulseText
 if show_text then
     pulseText = wibox.widget.textbox()
     pulseText:set_align("center")
-    pulseWidget = wibox.layout.margin(make_stack(pulseBar, pulseText),
+    pulseWidget = wibox.layout.margin(make_stack(pulseText),
                                             margin_right, margin_left,
                                             margin_top, margin_bottom)
 else
@@ -85,7 +86,9 @@ end
 function pulseWidget.setColor(mute)
 	if mute then
 		pulseBar:set_color(color_mute)
+		--pulseText:set_color(color_mute)
 		pulseBar:set_background_color(color_bg_mute)
+		p.Volume = 0
 	else
 		pulseBar:set_color(color)
 		pulseBar:set_background_color(color_bg)
@@ -93,11 +96,12 @@ function pulseWidget.setColor(mute)
 end
 
 local function _update()
-	pulseBar:set_value(p.Volume)
+	pulseBar:set_value(0.3)
 	pulseWidget.setColor(p.Mute)
     if show_text then
-        pulseText:set_markup('<span color="'..text_color..'">'..math.ceil(p.Volume*100)..'%</span>')
-
+        --pulseText:set_markup('<span color="'..text_color..'">'..math.ceil(p.Volume*100)..'%</span>')
+	pulseText:set_font('Tewi 9')
+	pulseText:set_text(' '..math.ceil(p.Volume*100)..'% ')
     end
 end
 
